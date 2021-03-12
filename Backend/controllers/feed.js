@@ -22,10 +22,10 @@ exports.createPost = (req, res, next) => {
   const errors = validationResult(req);
   console.log(errors);
   if (!errors.isEmpty()) {
-    return res.status(422).json({
-      message: "Validation Failed.Entered data is incorrect.",
-      error: errors.array(),
-    });
+    const error = new Error();
+    error.message = "Validation Failed.Entered data is incorrect.";
+    error.statusCode = 422;
+    throw error;
   }
   const title = req.body.title;
   const content = req.body.content;
@@ -37,15 +37,19 @@ exports.createPost = (req, res, next) => {
       name: "Prateek",
     },
   });
-  post.save().then((result) => {
-    console.log(result);
-    res
-      .status(201)
-      .json({
+  post
+    .save()
+    .then((result) => {
+      console.log(result);
+      res.status(201).json({
         message: "Post created successfully!",
         post: result,
-      })
-	}).catch((err) => {
-	  console.log(err);
+      });
+    })
+    .catch((err) => {
+		if(!errors.statusCode){
+			err.statusCode = 500;
+		}
+		next(err)
 	});
 };
