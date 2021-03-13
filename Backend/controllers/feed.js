@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const Post = require("../models/post");
+const User = require("../models/user");
 const { validationResult } = require("express-validator");
 
 exports.getPosts = (req, res, next) => {
@@ -49,30 +50,37 @@ exports.createPost = (req, res, next) => {
   const content = req.body.content;
   const imageUrl = req.file.path;
   const newimageUrl = imageUrl.replace(/\\/g, "/");
-  console.log(imageUrl);
-  console.log(newimageUrl);
+  let creator;
+  let post;
   if (!imageUrl) {
     const error = new Error();
     error.message = "Invalid image formate..";
     error.statusCode = 422;
     throw error;
   }
-
-  const post = new Post({
-    title: title,
-    content: content,
-    imageUrl: newimageUrl,
-    creator: {
-      name: "Prateek",
-    },
-  });
-  post
-    .save()
+  User.findById(req.userId)
+    .then((user) => {
+      creator = user;
+      post = new Post({
+        title: title,
+        content: content,
+        imageUrl: newimageUrl,
+        creator: {
+          id: creator._id,
+          name: creator.name,
+        },
+      });
+      return post.save();
+    })
     .then((result) => {
-      console.log(result);
+      creator.post.push(post);
+      return creator.save();
+    })
+    .then((result) => {
       res.status(201).json({
         message: "Post created successfully!",
-        post: result,
+        post: post,
+        creator: { _id: creator._id, name: creator.name },
       });
     })
     .catch((err) => {
@@ -85,16 +93,14 @@ exports.createPost = (req, res, next) => {
 
 exports.getPost = (req, res, next) => {
   const postId = req.params.postId;
-  console.log(postId);
+
   Post.findById(postId)
     .then((post) => {
       if (!post) {
         const error = new Error("Post not found!");
         error.statusCode = 404;
-        // console.log(error);
         throw error;
       }
-      console.log(post);
       return res.status(200).json({
         message: "Post fetched successfully",
         post: post,
@@ -119,12 +125,9 @@ exports.updatePost = (req, res, next) => {
   const title = req.body.title;
   const content = req.body.content;
   let imageUrl = req.body.image;
-  console.log("old", imageUrl);
   if (req.file) {
     imageUrl = req.file.path;
-    console.log("new", imageUrl);
   }
-  console.log(imageUrl);
   imageUrl = imageUrl.replace(/\\/g, "/");
   if (!imageUrl) {
     const error = new Error();
@@ -132,12 +135,17 @@ exports.updatePost = (req, res, next) => {
     error.statusCode = 422;
     throw error;
   }
+
   Post.findById(postId)
     .then((post) => {
       if (!post) {
         const error = new Error("Post not found!");
         error.statusCode = 404;
-        // console.log(error);
+        throw error;
+      }
+      if (post.creator.id.toString() !== req.userId) {
+        const error = new Error("Unauthorized user!");
+        error.statusCode = 403;
         throw error;
       }
       post.title = title;
@@ -170,17 +178,29 @@ exports.deletePost = (req, res, next) => {
       if (!post) {
         const error = new Error("Post not found!");
         error.statusCode = 404;
-        // console.log(error);
         throw error;
       }
       imageUrl = post.imageUrl;
-      return Post.deleteOne({ _id: postId }).then((result) => {
-        clearImage(imageUrl);
-        return res.status(200).json({
-          message: "Post delteed successful",
-          result: result,
+      if (post.creator.id.toString() !== req.userId) {
+        const error = new Error("Unauthorized user!");
+        error.statusCode = 403;
+        throw error;
+      }
+      return Post.deleteOne({ _id: postId })
+        .then((result) => {
+          clearImage(imageUrl);
+          return User.findById(req.userId);
+        })
+        .then((user) => {
+          user.post.pull(postId);
+          return user.save();
+        })
+        .then((result) => {
+          return res.status(200).json({
+            message: "Post delteed successful",
+            result: result,
+          });
         });
-      });
     })
     .catch((err) => {
       if (!err.statusCode) {

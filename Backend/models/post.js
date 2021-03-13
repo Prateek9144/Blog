@@ -16,6 +16,11 @@ const postSchema = new Schema(
       require: true,
     },
     creator: {
+      id: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        require: true,
+      },
       name: {
         type: String,
         require: true,
@@ -25,4 +30,4 @@ const postSchema = new Schema(
   { timestamps: true }
 );
 
-	module.exports = mongoose.model("Post", postSchema);
+module.exports = mongoose.model("Post", postSchema);
