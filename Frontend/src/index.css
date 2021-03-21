@@ -1,7 +1,8 @@
 * {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 body {
-  font-family: sans-serif;
+	/* background-color: whitesmoke; */
+	font-family: sans-serif;
 }

@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
+const io = require("../socket");
 const Post = require("../models/post");
 const User = require("../models/user");
 const { validationResult } = require("express-validator");
@@ -14,7 +15,8 @@ exports.getPosts = async (req, res, next) => {
     const totalItems = await Post.countDocuments();
     const posts = await Post.find()
       .skip((currentPage - 1) * perPage)
-      .limit(perPage);
+      .limit(perPage)
+      .sort({ CreatedAt: -1 });
     if (!posts) {
       const error = new Error("Posts not found!");
       error.statusCode = 404;
@@ -65,6 +67,10 @@ exports.createPost = async (req, res, next) => {
     await post.save();
     await creator.post.push(post);
     await creator.save();
+    io.getIO().emit("posts", {
+      action: "create",
+      post: { ...post._doc, creator: { _id: req.userId, name: creator.name } },
+    });
     res.status(201).json({
       message: "Post created successfully!",
       post: post,
@@ -121,7 +127,7 @@ exports.updatePost = async (req, res, next) => {
     throw error;
   }
   try {
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId).populate("creator");
     if (!post) {
       const error = new Error("Post not found!");
       error.statusCode = 404;
@@ -139,6 +145,7 @@ exports.updatePost = async (req, res, next) => {
     }
     post.imageUrl = imageUrl;
     await post.save();
+    io.getIO().emit("posts", { action: "update", post: post });
 
     res.json({
       message: "Post updated.",
@@ -176,7 +183,10 @@ exports.deletePost = async (req, res, next) => {
 
     await user.post.pull(postId);
     await user.save();
-
+    io.getIO().emit("posts", {
+      action: "delete",
+      post: { postId: postId },
+    });
     return res.status(200).json({
       message: "Post delteed successful",
     });

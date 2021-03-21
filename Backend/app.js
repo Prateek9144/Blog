@@ -10,6 +10,8 @@ const authRoutes = require("./routes/auth");
 
 const app = express();
 
+MONGO_URI = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.bo9ad.mongodb.net/${process.env.MONGO_DEFAULT_DATABASE}`;
+
 // app.use(bodyParser.urlencoded()); // x-www-form-urlencoded <form>
 app.use(bodyParser.json()); // application/json
 app.use("/images", express.static(path.join(__dirname, "images")));
@@ -52,7 +54,7 @@ app.use("/feed", feedRoutes);
 app.use("/auth", authRoutes);
 
 app.use((error, req, res, next) => {
-  console.log(error);
+  console.log("error", error);
   const status = error.statusCode || 500;
   const message = error.message;
   const data = error.data;
@@ -63,9 +65,13 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-  .connect("mongodb+srv://Prateek:Prateek9144@cluster0.bo9ad.mongodb.net/feed")
+  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((result) => {
-    app.listen(8080);
+    const server = app.listen(8080);
+    const io = require("./socket").init(server);
+    io.on("connection", (socket) => {
+      console.log("Client connected");
+    });
   })
   .catch((err) => {
     console.log(err);
