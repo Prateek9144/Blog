@@ -2,6 +2,7 @@ import React, { Component } from "react";
 
 import Image from "../../../components/Image/Image";
 import "./SinglePost.css";
+const API_URI = "https://server-blog.herokuapp.com";
 
 class SinglePost extends Component {
   state = {
@@ -14,7 +15,7 @@ class SinglePost extends Component {
 
   componentDidMount() {
     const postId = this.props.match.params.postId;
-    fetch("http://localhost:8080/feed/post/" + postId, {
+    fetch(`${API_URI}/feed/post/` + postId, {
       headers: {
         Authorization: "Bearer " + this.props.token,
       },
@@ -27,7 +28,7 @@ class SinglePost extends Component {
       })
       .then((resData) => {
         console.log(resData);
-        const imageUrl = "http://localhost:8080/" + resData.post.imageUrl;
+        const imageUrl = API_URI + resData.post.imageUrl;
         this.setState({
           title: resData.post.title,
           author: resData.post.creator.name,
