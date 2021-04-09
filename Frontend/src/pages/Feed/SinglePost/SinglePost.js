@@ -28,7 +28,7 @@ class SinglePost extends Component {
       })
       .then((resData) => {
         console.log(resData);
-        const imageUrl = API_URI + resData.post.imageUrl;
+        const imageUrl = API_URI + "/" + resData.post.imageUrl;
         this.setState({
           title: resData.post.title,
           author: resData.post.creator.name,
