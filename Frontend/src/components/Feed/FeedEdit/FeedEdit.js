@@ -13,7 +13,7 @@ const POST_FORM = {
     value: '',
     valid: false,
     touched: false,
-    validators: [required, length({ min: 5 })]
+    validators: [required, length({ min: 3	 })]
   },
   image: {
     value: '',

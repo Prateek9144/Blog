@@ -12,7 +12,7 @@ const app = express();
 
 MONGO_URI = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.bo9ad.mongodb.net/${process.env.MONGO_DEFAULT_DATABASE}`;
 
-// app.use(bodyParser.urlencoded()); // x-www-form-urlencoded <form>
+
 app.use(bodyParser.json()); // application/json
 app.use("/images", express.static(path.join(__dirname, "images")));
 const fileStorage = multer.diskStorage({
