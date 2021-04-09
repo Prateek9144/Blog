@@ -1,6 +1,7 @@
 # MERN Blogging Application
 
-A simple realtime Blogging web application.
+A simple realtime Blogging web application. 
+https://bloggs-app.netlify.app/
 
 ## Tech used are
 - Nodejs
