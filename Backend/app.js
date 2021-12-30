@@ -5,14 +5,11 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const multer = require("multer");
 
-const feedRoutes = require("./routes/feed");
-const authRoutes = require("./routes/auth");
-
 const app = express();
 
 MONGO_URI = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.bo9ad.mongodb.net/${process.env.MONGO_DEFAULT_DATABASE}`;
 
-app.use(bodyParser.json()); // application/json
+app.use(bodyParser.json()); // application/jsonnpm audit 
 app.use("/images", express.static(path.join(__dirname, "images")));
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -48,9 +45,6 @@ app.use((req, res, next) => {
 app.use(
   multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
 );
-
-app.use("/feed", feedRoutes);
-app.use("/auth", authRoutes);
 
 app.use((error, req, res, next) => {
   console.log("error", error);
